@@ -1,0 +1,383 @@
+{
+	"info": {
+		"_postman_id": "backend-work-order-test",
+		"name": "Backend Work Order API",
+		"description": "API Tests for Work Order System. \n\n**Prerequisites:**\n1. Run `npx prisma studio` (or via Docker) to create **three users**: \n   - One with role `ADMIN` (copy ID to `admin_id` variable)\n   - One with role `SPV` (copy ID to `spv_id` variable)\n   - One with role `MECHANIC` (copy ID to `mechanic_id` variable)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000/api",
+			"type": "string"
+		},
+		{
+			"key": "admin_id",
+			"value": "REPLACE_WITH_Valid_Admin_UUID",
+			"type": "string"
+		},
+		{
+			"key": "mechanic_id",
+			"value": "REPLACE_WITH_Valid_Mechanic_UUID",
+			"type": "string"
+		},
+		{
+			"key": "spv_id",
+			"value": "REPLACE_WITH_Valid_SPV_UUID",
+			"type": "string"
+		},
+		{
+			"key": "work_order_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "sparepart_request_id",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Get All Work Orders",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/work-orders",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"work-orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "2. Create Work Order (ADMIN)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.environment.set(\"work_order_id\", jsonData.id);",
+							"pm.collectionVariables.set(\"work_order_id\", jsonData.id);",
+							"console.log(\"Created Work Order ID: \" + jsonData.id);",
+							"",
+							"// Validate Full Object Structure",
+							"pm.test(\"Work Order created with full fields\", function () {",
+							"    pm.expect(jsonData).to.have.property(\"id\");",
+							"    pm.expect(jsonData.status).to.eql(\"OPEN\");",
+							"    pm.expect(jsonData).to.have.property(\"title\");",
+							"    pm.expect(jsonData).to.have.property(\"description\");",
+							"    pm.expect(jsonData).to.have.property(\"created_by\");",
+							"    pm.expect(jsonData).to.have.property(\"created_at\");",
+							"    pm.expect(jsonData).to.have.property(\"updated_at\");",
+							"    ",
+							"    // Initial state should be null for these",
+							"    pm.expect(jsonData.assigned_mechanic_id).to.be.null;",
+							"    pm.expect(jsonData.start_date).to.be.null;",
+							"    pm.expect(jsonData.end_date).to.be.null;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "x-role",
+						"value": "ADMIN",
+						"type": "text"
+					},
+					{
+						"key": "x-user-id",
+						"value": "{{admin_id}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"Fix Hydraulic Pump {{$timestamp}}\",\n    \"description\": \"Pump leaking oil severely.\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/work-orders",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"work-orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3. Submit Work Order (ADMIN)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-role",
+						"value": "ADMIN",
+						"type": "text"
+					},
+					{
+						"key": "x-user-id",
+						"value": "{{admin_id}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/work-orders/{{work_order_id}}/submit",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"work-orders",
+						"{{work_order_id}}",
+						"submit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4. Assign Mechanic (SPV)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "x-role",
+						"value": "SPV",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"mechanic_id\": \"{{mechanic_id}}\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/work-orders/{{work_order_id}}/assign",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"work-orders",
+						"{{work_order_id}}",
+						"assign"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "5. Update Work Order Info (ADMIN)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "x-role",
+						"value": "ADMIN",
+						"type": "text"
+					},
+					{
+						"key": "x-user-id",
+						"value": "{{admin_id}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"Fix Hydraulic Pump (Edited)\",\n    \"description\": \"Updated: Inspection found hydraulic leak source at main valve.\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/work-orders/{{work_order_id}}/update",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"work-orders",
+						"{{work_order_id}}",
+						"update"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "6. Request Sparepart (ADMIN - Optional)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.environment.set(\"sparepart_request_id\", jsonData.id);",
+							"pm.collectionVariables.set(\"sparepart_request_id\", jsonData.id);",
+							"console.log(\"Sparepart Request ID: \" + jsonData.id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "x-role",
+						"value": "ADMIN",
+						"type": "text"
+					},
+					{
+						"key": "x-user-id",
+						"value": "{{admin_id}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"work_order_id\": \"{{work_order_id}}\",\n    \"requested_by\": \"{{admin_id}}\",\n    \"items\": [\n        { \"name\": \"Seal Ring\", \"qty\": 2 },\n        { \"name\": \"Hydraulic Oil 5L\", \"qty\": 1 }\n    ]\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/sparepart-requests",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"sparepart-requests"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "7. Approve Sparepart (SPV)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "x-role",
+						"value": "SPV",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"approver_id\": \"{{spv_id}}\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/sparepart-requests/{{sparepart_request_id}}/approve",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"sparepart-requests",
+						"{{sparepart_request_id}}",
+						"approve"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "8. Start Working (MECHANIC)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-role",
+						"value": "MECHANIC",
+						"type": "text"
+					},
+					{
+						"key": "x-user-id",
+						"value": "{{mechanic_id}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/work-orders/{{work_order_id}}/start",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"work-orders",
+						"{{work_order_id}}",
+						"start"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "9. Complete Work Order (ADMIN)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "x-role",
+						"value": "ADMIN",
+						"type": "text"
+					},
+					{
+						"key": "x-user-id",
+						"value": "{{admin_id}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"end_date\": \"2026-12-31T23:59:59Z\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/work-orders/{{work_order_id}}/complete",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"work-orders",
+						"{{work_order_id}}",
+						"complete"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
