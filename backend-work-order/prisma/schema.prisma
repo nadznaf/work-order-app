@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model User {
+  id         String   @id @default(uuid())
+  name       String
+  role       String // ADMIN, SPV, MECHANIC
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  createdWorkOrders  WorkOrder[]        @relation("CreatedBy")
+  assignedWorkOrders WorkOrder[]        @relation("AssignedMechanic")
+  requestedSpareparts SparepartRequest[] @relation("RequestedBy")
+  approvedSpareparts  SparepartRequest[] @relation("ApprovedBy")
+
+  @@map("users")
+}
+
+model WorkOrder {
+  id                   String    @id @default(uuid())
+  title                String
+  description          String?   @db.Text
+  status               String // OPEN, SUBMITTED, WORKING, COMPLETED
+  created_by           String
+  assigned_mechanic_id String?
+  start_date           DateTime?
+  end_date             DateTime?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+
+  creator           User               @relation("CreatedBy", fields: [created_by], references: [id])
+  assignedMechanic  User?              @relation("AssignedMechanic", fields: [assigned_mechanic_id], references: [id])
+  sparepartRequests SparepartRequest[]
+
+  @@map("work_orders")
+}
+
+model SparepartRequest {
+  id            String   @id @default(uuid())
+  work_order_id String
+  status        String // PENDING, APPROVED
+  requested_by  String
+  approved_by   String?
+  approval_note String?  @db.Text
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  workOrder WorkOrder       @relation(fields: [work_order_id], references: [id])
+  requestor User            @relation("RequestedBy", fields: [requested_by], references: [id])
+  approver  User?           @relation("ApprovedBy", fields: [approved_by], references: [id])
+  items     SparepartItem[]
+
+  @@map("sparepart_requests")
+}
+
+model SparepartItem {
+  id                   String   @id @default(uuid())
+  sparepart_request_id String
+  name                 String
+  qty                  Int
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  sparepartRequest SparepartRequest @relation(fields: [sparepart_request_id], references: [id])
+
+  @@map("sparepart_items")
+}
