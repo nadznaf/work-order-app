@@ -4,10 +4,13 @@ export interface WorkOrder {
   id: string;
   title: string;
   description?: string;
-  status: 'OPEN' | 'SUBMITTED' | 'ASSIGNED' | 'WORKING' | 'COMPLETED';
-  start_date?: string;
-  end_date?: string;
+  status: 'OPEN' | 'SUBMITTED' | 'ASSIGNED' | 'WORKING' | 'COMPLETED' | 'WAITING_SPAREPART'; // Added WAITING_SPAREPART
+  created_by: string;
+  assigned_mechanic_id?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
   created_at: string;
+  updated_at: string;
   // Extended for Detail with relations if available
   sparepartRequests?: SparepartRequest[];
 }
@@ -32,7 +35,7 @@ export const getStatusBadgeVariant = (status: string) => {
     }
 };
 
-export const formatDate = (dateString?: string) => {
+export const formatDate = (dateString?: string | null) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleString('en-GB', {
       day: '2-digit', month: '2-digit', year: 'numeric',

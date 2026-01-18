@@ -10,6 +10,7 @@ import { Button } from '@/src/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Badge } from '@/src/components/ui/badge';
 import { Loader2, ArrowLeft, Plus, Trash2, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface WorkOrderDetailProps {
   workOrderId: string;
@@ -63,8 +64,9 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
             setIsEditing(false);
             setShowEditConfirmModal(false);
             fetchWorkOrder();
+            toast.success("Work Order updated successfully");
         } catch (err: any) {
-            alert('Failed to update: ' + (err.response?.data?.message || err.message));
+            toast.error('Failed to update: ' + (err.response?.data?.message || err.message));
             setShowEditConfirmModal(false);
         } finally {
             setActionLoading(false);
@@ -96,12 +98,12 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const handleSubmitSparepart = async () => {
-    if (!currentUserId) return alert("User ID missing context");
+      if (!currentUserId) return toast.error("User ID missing context");
 
         // Validation
         const invalidItems = sparepartItems.filter(i => !i.name.trim() || i.qty < 1);
         if (invalidItems.length > 0) {
-            alert("Please fill in all item names and ensure quantity is at least 1.");
+            toast.error("Please fill in all item names and ensure quantity is at least 1.");
             return;
         }
 
@@ -116,8 +118,9 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
       setShowSparepartForm(false);
       setSparepartItems([{ name: '', qty: 1 }]);
       fetchWorkOrder(); // Refresh
+        toast.success("Sparepart request submitted");
     } catch (err: any) {
-      alert('Failed to submit request: ' + (err.response?.data?.message || err.message));
+        toast.error('Failed to submit request: ' + (err.response?.data?.message || err.message));
         setShowConfirmModal(false);
     } finally {
       setActionLoading(false);
@@ -127,7 +130,7 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
     const [confirmApproveId, setConfirmApproveId] = useState<string | null>(null);
 
   const handleApproveSparepart = async (requestId: string) => {
-      if (!currentUserId) return alert("User ID missing context");
+      if (!currentUserId) return toast.error("User ID missing context");
         setConfirmApproveId(requestId);
     };
 
@@ -139,8 +142,9 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
           await workOrderService.approveSparepartRequest(confirmApproveId, currentUserId);
           setConfirmApproveId(null);
           fetchWorkOrder();
+          toast.success("Sparepart request approved");
       } catch (err: any) {
-          alert('Failed to approve: ' + (err.response?.data?.message || err.message));
+          toast.error('Failed to approve: ' + (err.response?.data?.message || err.message));
           setConfirmApproveId(null);
       } finally {
           setActionLoading(false);

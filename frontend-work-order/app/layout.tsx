@@ -3,6 +3,7 @@ import { Inter, Outfit } from "next/font/google"; // Using prompt specific fonts
 import "./globals.css";
 import { RoleProvider } from "@/src/context/RoleContext";
 import Navbar from "@/src/components/Navbar";
+import { Toaster } from 'sonner';
 
 
 // Using Outfit as primary font for 'premium' look
@@ -27,6 +28,7 @@ export default function RootLayout({
           <main className="pt-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
             {children}
           </main>
+          <Toaster richColors position="top-right" />
         </RoleProvider>
       </body>
     </html>

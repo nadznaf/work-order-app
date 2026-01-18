@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
 import { Loader2, AlertCircle, X } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { workOrderService } from '@/src/services/workOrderService';
 import { userService } from '@/src/services/userService';
@@ -30,6 +31,41 @@ export default function WorkOrderList() {
   const [selectedMechanicId, setSelectedMechanicId] = useState<string>('');
   const [mechanics, setMechanics] = useState<User[]>([]);
   const [loadingMechanics, setLoadingMechanics] = useState(false);
+
+  // Start Work Modal State
+  const [startWorkOrderId, setStartWorkOrderId] = useState<string | null>(null);
+
+  const handleConfirmStart = async () => {
+    if (!startWorkOrderId) return;
+    const wo = workOrders.find(w => w.id === startWorkOrderId);
+    if (!wo) return;
+
+    // Close modal immediately but keep ID for loading state
+    // actually better to keep modal open or just close and show loading on row? 
+    // User requested "pop over... click tombol start working". 
+    // Let's close modal and show loading on row or keep modal? 
+    // Existing pattern uses `actionLoading`.
+
+    const id = startWorkOrderId;
+    // setStartWorkOrderId(null); // Keep open if we want to show loading inside modal, or close if row.
+    // Let's keep it open to show loading inside modal as per new UI code above uses actionLoading
+    // Actually the UI above uses actionLoading inside the modal button.
+
+    setActionLoading(id);
+    try {
+      await workOrderService.startWorkOrder(id);
+      await fetchWorkOrders();
+      toast.success("Work Order started successfully");
+      setStartWorkOrderId(null); // Close on success
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message;
+      toast.error(`Failed to Start: ${msg}`);
+      // Don't close modal on error so user can try again? or close?
+      setStartWorkOrderId(null);
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const fetchWorkOrders = async () => {
     setLoading(true);
@@ -54,7 +90,7 @@ export default function WorkOrderList() {
     switch (status) {
         case 'OPEN': return 'Breakdown';
         case 'WORKING': return 'On Progress';
-        case 'ASSIGNED': return 'On Progress';
+      case 'ASSIGNED': return 'Assigned';
         default: return status;
     }
   }
@@ -66,16 +102,17 @@ export default function WorkOrderList() {
     try {
       if (type === 'submit') {
         await workOrderService.submitWorkOrder(wo.id);
-      } else if (type === 'start') {
-        await workOrderService.startWorkOrder(wo.id);
+        // } else if (type === 'start') {  <-- REMOVED from here as handled by modal now
+        //   await workOrderService.startWorkOrder(wo.id);
       } else if (type === 'complete') {
         await workOrderService.completeWorkOrder(wo.id, body.end_date);
       }
 
       await fetchWorkOrders(); 
+      toast.success(`Work Order ${action}ed successfully`);
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message;
-      alert(`Failed to ${action}: ${msg}`);
+      toast.error(`Failed to ${action}: ${msg}`);
     } finally {
       setActionLoading(null);
     }
@@ -94,7 +131,7 @@ export default function WorkOrderList() {
       }
     } catch (err) {
       console.error("Failed to fetch mechanics", err);
-      alert("Failed to load mechanics list");
+      toast.error("Failed to load mechanics list");
     } finally {
       setLoadingMechanics(false);
     }
@@ -105,7 +142,7 @@ export default function WorkOrderList() {
 
     // Validate selection
     if (!selectedMechanicId) {
-      alert("Please select a mechanic");
+      toast.error("Please select a mechanic");
       return;
     }
 
@@ -118,9 +155,10 @@ export default function WorkOrderList() {
     try {
       await workOrderService.assignWorkOrder(wo.id, selectedMechanicId);
       await fetchWorkOrders();
+      toast.success("Mechanic assigned successfully");
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message;
-      alert(`Failed to Assign: ${msg}`);
+      toast.error(`Failed to Assign: ${msg}`);
     } finally {
       setActionLoading(null);
     }
@@ -168,7 +206,10 @@ export default function WorkOrderList() {
         <Button 
             size="sm" 
             variant="warning"
-            onClick={() => handleAction(wo, 'Start Working', 'start')}
+          onClick={(e) => {
+            e.stopPropagation();
+            setStartWorkOrderId(wo.id);
+          }} // trigger modal
             disabled={isActionLoading}
         >
              {isActionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -334,6 +375,35 @@ export default function WorkOrderList() {
                 disabled={loadingMechanics || mechanics.length === 0}
               >
                 Confirm Assignment
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* START WORKING CONFIRMATION MODAL */}
+      {startWorkOrderId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 space-y-4 scale-100 transform transition-all">
+            <div className="flex flex-col items-center text-center space-y-2">
+              <div className="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 mb-2">
+                <Loader2 className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Start Working?</h3>
+              <p className="text-sm text-gray-500">
+                Are you ready to begin working on this order? This will track your start time.
+              </p>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setStartWorkOrderId(null)}>Cancel</Button>
+              <Button
+                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
+                onClick={handleConfirmStart}
+                disabled={actionLoading === startWorkOrderId}
+              >
+                {actionLoading === startWorkOrderId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Yes, Start Now
               </Button>
             </div>
           </div>
