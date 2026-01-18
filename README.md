@@ -40,6 +40,8 @@ This repository is a monorepo containing:
 ### Work Orders
 | Method | Endpoint | Description | Body |
 | :--- | :--- | :--- | :--- |
+| `GET` | `/work-orders` | List all Work Orders | - |
+| `GET` | `/work-orders/:id` | Get Work Order Details | - |
 | `POST` | `/work-orders` | Create a new Work Order | `{ title, description, created_by }` |
 | `POST` | `/work-orders/:id/submit` | Submit WO (Status: OPEN -> SUBMITTED) | - |
 | `POST` | `/work-orders/:id/update` | Update WO Details | `{ title, description, end_date }` |
