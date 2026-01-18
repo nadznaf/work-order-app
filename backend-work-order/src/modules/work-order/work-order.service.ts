@@ -126,6 +126,14 @@ export class WorkOrderService {
     return updated;
   }
 
+  async findOne(id: string): Promise<WorkOrder> {
+    console.log(`[Service] finding work order ${id}`);
+    const wo = await this.repository.findById(id);
+    console.log(`[Service] Result:`, wo);
+    if (!wo) throw new NotFoundException('Work Order Not Found');
+    return wo;
+  }
+
   async findAll(): Promise<WorkOrder[]> {
     return this.repository.findAll();
   }

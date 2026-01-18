@@ -42,6 +42,12 @@ export class WorkOrderController {
     return this.service.complete(id, body.end_date, role);
   }
 
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    console.log(`[Controller] GET /work-orders/${id} hit`);
+    return this.service.findOne(id);
+  }
+
   @Get()
   async findAll() {
       return this.service.findAll();

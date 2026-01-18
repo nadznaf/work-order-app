@@ -30,7 +30,14 @@ export class WorkOrderRepository {
   }
 
   async findById(id: string): Promise<WorkOrder | null> {
-    return this.prisma.workOrder.findUnique({ where: { id } });
+    return this.prisma.workOrder.findUnique({
+      where: { id },
+      include: {
+        sparepartRequests: {
+          include: { items: true }
+        }
+      }
+    });
   }
 
   async findActiveByTitle(title: string): Promise<WorkOrder | null> {
