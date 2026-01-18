@@ -79,27 +79,18 @@ export class WorkOrderRepository implements IWorkOrderRepository {
   }
 
   async createSparepartRequest(workOrderId: string, requestorId: string, items: { name: string; qty: number }[]): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      // 1. Create Sparepart Request
-      await tx.sparepartRequest.create({
-        data: {
-          work_order_id: workOrderId,
-          requested_by: requestorId,
-          status: 'PENDING',
-          items: {
-            create: items.map((item) => ({
-              name: item.name,
-              qty: item.qty,
-            })),
-          },
+    await this.prisma.sparepartRequest.create({
+      data: {
+        work_order_id: workOrderId,
+        requested_by: requestorId,
+        status: 'PENDING',
+        items: {
+          create: items.map((item) => ({
+            name: item.name,
+            qty: item.qty,
+          })),
         },
-      });
-
-      // 2. Update Work Order Status
-      await tx.workOrder.update({
-        where: { id: workOrderId },
-        data: { status: WorkOrderStatus.WAITING_SPAREPART },
-      });
+      },
     });
   }
 

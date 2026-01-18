@@ -1,4 +1,5 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, IsArray, IsNumber, Min, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { WorkOrderStatus } from '../../../common/enums/workflow.enum';
 
 export class CreateWorkOrderDto {
@@ -43,6 +44,17 @@ export class UpdatedWorkOrderDto {
   end_date?: string; // ISO Date string
 }
 
+export class SparepartItemDto {
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  @Min(1)
+  qty: number;
+}
+
 export class CreateSparepartRequestDto {
   @IsNotEmpty()
   @IsString()
@@ -53,5 +65,8 @@ export class CreateSparepartRequestDto {
   requested_by: string; // User ID
 
   @IsNotEmpty()
-  items: { name: string; qty: number }[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SparepartItemDto)
+  items: SparepartItemDto[];
 }

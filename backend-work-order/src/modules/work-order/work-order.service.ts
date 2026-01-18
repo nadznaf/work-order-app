@@ -77,8 +77,8 @@ export class WorkOrderService {
     // If status is WAITING_SPAREPART, maybe mechanic needs to start again or system auto updates?
     // Let's assume Mechanic manually starts it again or continues.
 
-    if (wo.status !== WorkOrderStatus.ASSIGNED && wo.status !== WorkOrderStatus.WAITING_SPAREPART) {
-      throw new BadRequestException('Work Order must be ASSIGNED or WAITING_SPAREPART to Start Working');
+    if (wo.status !== WorkOrderStatus.ASSIGNED) {
+      throw new BadRequestException('Work Order must be ASSIGNED to Start Working');
     }
 
     // Auto-set start_date when status becomes WORKING
