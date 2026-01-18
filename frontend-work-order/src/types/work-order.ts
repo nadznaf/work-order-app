@@ -9,7 +9,7 @@ export interface WorkOrder {
   end_date?: string;
   created_at: string;
   // Extended for Detail with relations if available
-  sparepart_requests?: SparepartRequest[];
+  sparepartRequests?: SparepartRequest[];
 }
 
 export interface SparepartRequest {

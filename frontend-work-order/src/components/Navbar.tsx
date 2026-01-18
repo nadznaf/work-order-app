@@ -22,29 +22,23 @@ export default function Navbar() {
 
           {/* Role Selector & User Info */}
           <div className="flex items-center space-x-4">
-            <div className="flex flex-col items-end mr-4 hidden md:flex">
-              <span className="text-xs text-cyan-50 uppercase font-semibold tracking-wider opacity-90">Current Role</span>
-              <span className={`text-sm font-bold ${
-                currentRole === UserRole.ADMIN ? 'text-red-100' :
-                currentRole === UserRole.SPV ? 'text-purple-100' :
-                'text-green-100'
-              }`}>
-                {currentRole}
-              </span>
-            </div>
+            <div className="flex flex-col items-end mr-4">
+              <span className="text-xs text-cyan-50 uppercase font-semibold tracking-wider opacity-90 mb-1">Current Role</span>
 
-            {/* Role Dropdown */}
-            <select
-              value={currentRole}
-              onChange={(e) => setRole(e.target.value as UserRole)}
-              className="block w-32 pl-3 pr-10 py-1.5 text-sm border-gray-300 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 rounded-md dark:bg-gray-800 dark:border-gray-700 dark:text-white shadow-sm"
-            >
-              {Object.values(UserRole).map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))}
-            </select>
+              {/* Role Dropdown */}
+              <select
+                value={currentRole}
+                onChange={(e) => setRole(e.target.value as UserRole)}
+                className="block w-36 pl-2 pr-8 py-1 text-xs border-transparent bg-cyan-600/50 text-white focus:outline-none focus:ring-1 focus:ring-white/50 rounded cursor-pointer hover:bg-cyan-600/70 transition-colors"
+                style={{ textAlignLast: 'right' }}
+              >
+                {Object.values(UserRole).map((role) => (
+                  <option key={role} value={role} className="text-gray-900 bg-white">
+                    {role}
+                  </option>
+                ))}
+              </select>
+            </div>
             
              {/* Hidden User ID Input (Functionality Preserved) */}
              <div className="hidden">

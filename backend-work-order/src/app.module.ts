@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { WorkOrderModule } from './modules/work-order/work-order.module';
 import { SparepartRequestModule } from './modules/sparepart-request/sparepart-request.module';
+import { UsersModule } from './modules/users/users.module';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
@@ -12,6 +13,7 @@ import { ConfigModule } from '@nestjs/config';
     PrismaModule,
     WorkOrderModule,
     SparepartRequestModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

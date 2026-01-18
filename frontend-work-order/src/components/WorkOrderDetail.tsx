@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRole } from '@/src/context/RoleContext';
-import api from '@/src/api/axios';
+import { workOrderService } from '@/src/services/workOrderService';
 import { UserRole } from '@/src/types/enums';
 import { WorkOrder, getStatusBadgeVariant, formatDate } from '@/src/types/work-order';
 import { Button } from '@/src/components/ui/button';
@@ -23,6 +23,11 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
 
+    // Edit State
+    const [isEditing, setIsEditing] = useState(false);
+    const [editTitle, setEditTitle] = useState('');
+    const [editDesc, setEditDesc] = useState('');
+
   // Sparepart Form State
   const [showSparepartForm, setShowSparepartForm] = useState(false);
   const [sparepartItems, setSparepartItems] = useState([{ name: '', qty: 1 }]);
@@ -30,16 +35,41 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
   const fetchWorkOrder = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get(`/work-orders/${workOrderId}`);
-      // NOTE: Assuming Backend returns sparepartRequests in the response relations
-      // If not, we might need a separate fetch, but let's assume it does or we patched it implicitly.
+        const data = await workOrderService.getWorkOrder(workOrderId);
       setWorkOrder(data);
+        setEditTitle(data.title);
+        setEditDesc(data.description || '');
     } catch (err: any) {
       setError(err?.message || 'Failed to fetch details');
     } finally {
       setLoading(false);
     }
   };
+
+    const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
+
+    const handleUpdateWorkOrder = async () => {
+        if (!currentUserId) return;
+        setShowEditConfirmModal(true);
+    };
+
+    const handleConfirmUpdate = async () => {
+        setActionLoading(true);
+        try {
+            await workOrderService.updateWorkOrder(workOrderId, {
+                title: editTitle,
+                description: editDesc
+            });
+            setIsEditing(false);
+            setShowEditConfirmModal(false);
+            fetchWorkOrder();
+        } catch (err: any) {
+            alert('Failed to update: ' + (err.response?.data?.message || err.message));
+            setShowEditConfirmModal(false);
+        } finally {
+            setActionLoading(false);
+        }
+    };
 
   useEffect(() => {
     if (workOrderId) fetchWorkOrder();
@@ -63,38 +93,55 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
     setSparepartItems(newItems);
   };
 
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+
   const handleSubmitSparepart = async () => {
     if (!currentUserId) return alert("User ID missing context");
+
+        // Validation
+        const invalidItems = sparepartItems.filter(i => !i.name.trim() || i.qty < 1);
+        if (invalidItems.length > 0) {
+            alert("Please fill in all item names and ensure quantity is at least 1.");
+            return;
+        }
+
+        setShowConfirmModal(true);
+    };
+
+    const handleConfirmSubmit = async () => {
     setActionLoading(true);
     try {
-      await api.post('/sparepart-requests', {
-        work_order_id: workOrderId,
-        requested_by: currentUserId,
-        items: sparepartItems
-      });
-      alert('Sparepart request submitted successfully!');
+        await workOrderService.createSparepartRequest(workOrderId, currentUserId!, sparepartItems);
+        setShowConfirmModal(false);
       setShowSparepartForm(false);
       setSparepartItems([{ name: '', qty: 1 }]);
       fetchWorkOrder(); // Refresh
     } catch (err: any) {
       alert('Failed to submit request: ' + (err.response?.data?.message || err.message));
+        setShowConfirmModal(false);
     } finally {
       setActionLoading(false);
     }
   };
 
+    const [confirmApproveId, setConfirmApproveId] = useState<string | null>(null);
+
   const handleApproveSparepart = async (requestId: string) => {
       if (!currentUserId) return alert("User ID missing context");
-      if (!confirm("Approve this sparepart request?")) return;
+        setConfirmApproveId(requestId);
+    };
+
+    const handleConfirmApprove = async () => {
+        if (!confirmApproveId || !currentUserId) return;
       
       setActionLoading(true);
       try {
-          await api.post(`/sparepart-requests/${requestId}/approve`, {
-              approver_id: currentUserId
-          });
+          await workOrderService.approveSparepartRequest(confirmApproveId, currentUserId);
+          setConfirmApproveId(null);
           fetchWorkOrder();
       } catch (err: any) {
           alert('Failed to approve: ' + (err.response?.data?.message || err.message));
+          setConfirmApproveId(null);
       } finally {
           setActionLoading(false);
       }
@@ -113,22 +160,59 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
       <Card className="border-cyan-100 shadow-md">
         <CardHeader className="bg-cyan-50/50 border-b border-cyan-100 pb-4">
             <div className="flex justify-between items-start">
-                <div>
-                    <CardTitle className="text-2xl font-bold text-cyan-900">{workOrder.title}</CardTitle>
+                      <div className="flex-1 mr-4">
+                          {isEditing ? (
+                              <input
+                                  className="text-2xl font-bold text-cyan-900 bg-white border border-cyan-200 rounded px-2 w-full mb-1"
+                                  value={editTitle}
+                                  onChange={(e) => setEditTitle(e.target.value)}
+                              />
+                          ) : (
+                              <CardTitle className="text-2xl font-bold text-cyan-900">{workOrder.title}</CardTitle>
+                          )}
                     <p className="text-cyan-600/80 font-mono text-sm mt-1">ID: {workOrder.id}</p>
                 </div>
-                <Badge variant={getStatusBadgeVariant(workOrder.status) as any} className="text-sm px-3 py-1">
-                    {workOrder.status}
-                </Badge>
-            </div>
+
+                      <div className="flex items-center gap-2">
+                          {/* Edit Button for Admin */}
+                          {currentRole === UserRole.ADMIN && !isEditing && workOrder.status !== 'COMPLETED' && (
+                              <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)} className="text-gray-400 hover:text-cyan-600">
+                                  Edit
+                              </Button>
+                          )}
+                          {/* Save/Cancel Actions */}
+                          {isEditing && (
+                              <div className="flex gap-1">
+                                  <Button size="sm" variant="outline" onClick={() => { setIsEditing(false); setEditTitle(workOrder.title); setEditDesc(workOrder.description || ''); }}>
+                                      Cancel
+                                  </Button>
+                                  <Button size="sm" className="bg-cyan-600 text-white" onClick={handleUpdateWorkOrder} disabled={actionLoading}>
+                                      Save
+                                  </Button>
+                              </div>
+                          )}
+
+                          <Badge variant={getStatusBadgeVariant(workOrder.status) as any} className="text-sm px-3 py-1">
+                              {workOrder.status}
+                          </Badge>
+                      </div>
+                  </div>
         </CardHeader>
         <CardContent className="pt-6 grid md:grid-cols-2 gap-8">
             <div className="space-y-4">
                 <div>
                     <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Description</h3>
-                    <p className="text-gray-700 mt-1 bg-gray-50 p-3 rounded-md border border-gray-100">
-                        {workOrder.description || "No description provided."}
-                    </p>
+                          {isEditing ? (
+                              <textarea
+                                  className="w-full mt-1 bg-white p-3 rounded-md border border-cyan-200 min-h-[100px] text-sm"
+                                  value={editDesc}
+                                  onChange={(e) => setEditDesc(e.target.value)}
+                              />
+                          ) : (
+                              <p className="text-gray-700 mt-1 bg-gray-50 p-3 rounded-md border border-gray-100 min-h-[60px]">
+                                  {workOrder.description || "No description provided."}
+                              </p>
+                          )}
                 </div>
                 <div className="flex gap-6">
                     <div>
@@ -172,7 +256,7 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
           
           {/* LEFT COL: Request Form (Admin Only) */}
           <div className="md:col-span-1">
-            {currentRole === UserRole.ADMIN && (workOrder.status === 'ASSIGNED' || workOrder.status === 'WORKING') && (
+                  {currentRole === UserRole.ADMIN && workOrder.status !== 'COMPLETED' && (
                 <Card className="border-dashed border-2 border-cyan-200 bg-cyan-50/30">
                     <CardHeader>
                         <CardTitle className="text-base text-cyan-800">Add Sparepart Request</CardTitle>
@@ -234,11 +318,11 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
                         <CardTitle className="text-lg">Sparepart Requests History</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {(!workOrder.sparepart_requests || workOrder.sparepart_requests.length === 0) ? (
+                          {(!workOrder.sparepartRequests || workOrder.sparepartRequests.length === 0) ? (
                             <p className="text-sm text-gray-400 italic text-center py-8">No spareparts requested.</p>
                         ) : (
                             <div className="space-y-4">
-                                {workOrder.sparepart_requests.map((req) => (
+                                      {workOrder.sparepartRequests.map((req) => (
                                     <div key={req.id} className="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                                         <div>
                                             <div className="flex items-center gap-2 mb-2">
@@ -277,6 +361,97 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
           </div>
 
       </div>
+
+
+          {/* CONFIRMATION MODAL */}
+          {
+              showConfirmModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 space-y-4 scale-100 transform transition-all">
+                          <div className="flex flex-col items-center text-center space-y-2">
+                              <div className="h-12 w-12 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600 mb-2">
+                                  <CheckCircle className="h-6 w-6" />
+                              </div>
+                              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Confirm Sparepart Request</h3>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                  Are you sure you want to submit the following items?
+                              </p>
+                          </div>
+
+                          <div className="bg-gray-50 dark:bg-gray-900/50 rounded-md p-4 text-sm space-y-2 border border-gray-100 dark:border-gray-700 max-h-40 overflow-y-auto">
+                              {sparepartItems.map((item, idx) => (
+                                  <div key={idx} className="flex justify-between">
+                                      <span className="font-medium text-gray-700 dark:text-gray-300">{item.name}</span>
+                                      <span className="text-gray-500">x{item.qty}</span>
+                                  </div>
+                              ))}
+                          </div>
+
+                          <div className="flex gap-3 pt-2">
+                              <Button variant="outline" className="flex-1" onClick={() => setShowConfirmModal(false)}>Cancel</Button>
+                              <Button className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white" onClick={handleConfirmSubmit} disabled={actionLoading}>
+                                  {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                  Confirm & Submit
+                              </Button>
+                          </div>
+                      </div>
+                  </div>
+              )
+          }
+
+          {/* APPROVAL CONFIRMATION MODAL */}
+          {
+              confirmApproveId && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 space-y-4 scale-100 transform transition-all">
+                          <div className="flex flex-col items-center text-center space-y-2">
+                              <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-2">
+                                  <CheckCircle className="h-6 w-6" />
+                              </div>
+                              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Approve Request</h3>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                  Are you sure you want to approve this sparepart request?
+                              </p>
+                          </div>
+
+                          <div className="flex gap-3 pt-2">
+                              <Button variant="outline" className="flex-1" onClick={() => setConfirmApproveId(null)}>Cancel</Button>
+                              <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleConfirmApprove} disabled={actionLoading}>
+                                  {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                  Confirm Approve
+                              </Button>
+                          </div>
+                      </div>
+                  </div>
+              )
+          }
+
+          {/* EDIT CONFIRMATION MODAL */}
+          {
+              showEditConfirmModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 space-y-4 scale-100 transform transition-all">
+                          <div className="flex flex-col items-center text-center space-y-2">
+                              <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-2">
+                                  <CheckCircle className="h-6 w-6" />
+                              </div>
+                              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Confirm Update</h3>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                  Are you sure you want to save changes to this Work Order?
+                              </p>
+                          </div>
+
+                          <div className="flex gap-3 pt-2">
+                              <Button variant="outline" className="flex-1" onClick={() => setShowEditConfirmModal(false)}>Cancel</Button>
+                              <Button className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white" onClick={handleConfirmUpdate} disabled={actionLoading}>
+                                  {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                  Save Changes
+                              </Button>
+                          </div>
+                      </div>
+                  </div>
+              )
+          }
     </div>
   );
 }
