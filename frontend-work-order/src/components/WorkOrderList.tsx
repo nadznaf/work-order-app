@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRole } from '@/src/context/RoleContext';
-import api from '@/src/api/axios';
 import { UserRole } from '@/src/types/enums';
 
 // UI Components
@@ -13,18 +12,10 @@ import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
 import { Loader2, AlertCircle, X } from 'lucide-react';
 
-interface WorkOrder {
-  id: string;
-  title: string;
-  description?: string;
-  status: 'OPEN' | 'SUBMITTED' | 'ASSIGNED' | 'WORKING' | 'COMPLETED';
-  start_date?: string;
-  end_date?: string;
-  created_at: string;
-}
-
+import { workOrderService } from '@/src/services/workOrderService';
 import { userService } from '@/src/services/userService';
 import { User } from '@/src/types/user';
+import { WorkOrder, getStatusBadgeVariant, formatDate } from '@/src/types/work-order';
 
 export default function WorkOrderList() {
   const router = useRouter();
@@ -43,7 +34,7 @@ export default function WorkOrderList() {
   const fetchWorkOrders = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/work-orders');
+      const data = await workOrderService.getWorkOrders();
       setWorkOrders(data);
       setError('');
     } catch (err: any) {
@@ -58,18 +49,6 @@ export default function WorkOrderList() {
     fetchWorkOrders();
   }, [currentRole, currentUserId]); 
 
-  // Helper: Status Badge Color
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'OPEN': return 'destructive';
-      case 'SUBMITTED': return 'info';
-      case 'ASSIGNED': return 'warning';
-      case 'WORKING': return 'warning';
-      case 'COMPLETED': return 'success'; 
-      default: return 'secondary';
-    }
-  };
-
   // Helper: Status Label Mapper
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -80,21 +59,19 @@ export default function WorkOrderList() {
     }
   }
 
-  // Helper: Format Date
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleString('en-GB', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', hour12: false
-    }).replace(',', '');
-  };
-
-  const handleAction = async (wo: WorkOrder, action: string, endpointSuffix: string, body = {}) => {
-    if (action !== 'Assign' && !confirm(`Are you sure you want to ${action} this Work Order?`)) return;
+  const handleAction = async (wo: WorkOrder, action: string, type: 'submit' | 'start' | 'complete', body: any = {}) => {
+    if (type !== 'submit' && !confirm(`Are you sure you want to ${action} this Work Order?`)) return;
 
     setActionLoading(wo.id);
     try {
-      await api.post(`/work-orders/${wo.id}/${endpointSuffix}`, body);
+      if (type === 'submit') {
+        await workOrderService.submitWorkOrder(wo.id);
+      } else if (type === 'start') {
+        await workOrderService.startWorkOrder(wo.id);
+      } else if (type === 'complete') {
+        await workOrderService.completeWorkOrder(wo.id, body.end_date);
+      }
+
       await fetchWorkOrders(); 
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message;
@@ -139,7 +116,7 @@ export default function WorkOrderList() {
     setAssignTargetId(null); // Close modal
 
     try {
-      await api.post(`/work-orders/${wo.id}/assign`, { mechanic_id: selectedMechanicId });
+      await workOrderService.assignWorkOrder(wo.id, selectedMechanicId);
       await fetchWorkOrders();
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message;
@@ -232,7 +209,7 @@ export default function WorkOrderList() {
           )}
         </div>
 
-        <CardContent className="p-0 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <CardContent className="p-0 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
           {error && (
             <div className="p-4 bg-red-50 text-red-600 flex items-center gap-2 text-sm">
               <AlertCircle className="h-4 w-4" />
@@ -247,17 +224,16 @@ export default function WorkOrderList() {
             </div>
           ) : (
             <Table>
-                <TableHeader className="bg-cyan-100/50 text-cyan-900">
-                <TableRow className="border-b border-cyan-200">
-                    <TableHead className="w-[50px] text-cyan-900 font-semibold">No</TableHead>
-                    <TableHead className="text-cyan-900 font-semibold">Work Order</TableHead>
-                    <TableHead className="text-cyan-900 font-semibold">WO Number</TableHead>
-                    <TableHead className="text-cyan-900 font-semibold">Start Date</TableHead>
-                    <TableHead className="text-cyan-900 font-semibold">End Date</TableHead>
-                    <TableHead className="text-cyan-900 font-semibold">Created Time</TableHead>
-
-                    <TableHead className="text-center text-cyan-900 font-semibold">Status</TableHead>
-                    <TableHead className="text-center text-cyan-900 font-semibold">Action</TableHead>
+                <TableHeader className="bg-teal-600">
+                  <TableRow className="border-b border-teal-500">
+                    <TableHead className="text-center w-[50px] text-white font-semibold">No</TableHead>
+                    <TableHead className="text-center text-white font-semibold">Work Order</TableHead>
+                    <TableHead className="text-center text-white font-semibold">WO ID</TableHead>
+                    <TableHead className="text-center text-white font-semibold">Start Date</TableHead>
+                    <TableHead className="text-center text-white font-semibold">End Date</TableHead>
+                    <TableHead className="text-center text-white font-semibold">Created Time</TableHead>
+                    <TableHead className="text-center text-white font-semibold">Status</TableHead>
+                    <TableHead className="text-center text-white font-semibold">Action</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -269,21 +245,21 @@ export default function WorkOrderList() {
                     </TableRow>
                 ) : (
                       workOrders.map((wo, index) => (
-                    <TableRow key={wo.id} className="even:bg-[#F9FAFB] hover:bg-gray-50 transition-colors border-b border-gray-50" onClick={() => window.location.href = `/work-orders/${wo.id}`}>
+                        <TableRow key={wo.id} className="even:bg-[#F9FAFB] hover:bg-cyan-100/50 transition-colors border-b border-gray-50" onClick={() => window.location.href = `/work-orders/${wo.id}`}>
                           <TableCell className="font-medium text-gray-600">{index + 1}</TableCell>
                           <TableCell>
                             <span className="font-medium text-gray-700">{wo.title}</span>
                           </TableCell>
                           <TableCell>
-                            <span className="text-xs text-gray-500 font-mono">...{wo.id.slice(-6)}</span>
+                            <span className="text-xs text-gray-500 font-mono text-center">...{wo.id.slice(-6)}</span>
                           </TableCell>
-                          <TableCell className="text-xs text-gray-600 whitespace-nowrap">
+                          <TableCell className="text-xs text-gray-600 whitespace-nowrap text-center">
                             {formatDate(wo.start_date)}
                           </TableCell>
-                          <TableCell className="text-xs text-gray-600 whitespace-nowrap">
+                          <TableCell className="text-xs text-gray-600 whitespace-nowrap text-center">
                             {formatDate(wo.end_date)}
                           </TableCell>
-                          <TableCell className="text-xs text-gray-600 whitespace-nowrap">
+                          <TableCell className="text-xs text-gray-600 whitespace-nowrap text-center">
                             {formatDate(wo.created_at)}
                           </TableCell>
 
@@ -304,7 +280,7 @@ export default function WorkOrderList() {
 
           {/* Pagination Placeholder */}
           {!loading && (
-            <div className="flex items-center justify-end px-4 py-4 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-500 gap-4">
+            <div className="flex items-center justify-end px-4 py-4 border-t border-gray-100 text-xs text-gray-500 gap-4">
               <span>Rows per page: 10</span>
               <span>1-10 of {workOrders.length}</span>
             </div>

@@ -53,12 +53,48 @@ This repository is a monorepo containing:
 | `POST` | `/sparepart-requests` | Create Request | `{ work_order_id, requested_by, items: [{name, qty}] }` |
 | `POST` | `/sparepart-requests/:id/approve` | Approve Request | `{ approver_id }` |
 
-## Setup & Running
+## Quick Start (Docker Compose)
+This is the recommended way to run the application as per requirements.
 
-### Prerequisites
-- Node.js (v18+ recommended)
-- Docker & Docker Compose
-- npm
+1. **Clone the repository** (if not already done).
+2. **Run via Docker Compose**:
+   ```bash
+   docker compose up --build
+   ```
+3. **Access the Application**:
+   - Frontend: [http://localhost:3001](http://localhost:3001)
+   - Backend API: [http://localhost:3000](http://localhost:3000)
+   - Database: localhost:5433
+
+The database will be automatically seeded with:
+- **Admin**: `d855734e-4f25-4f46-9d35-364233777701`
+- **SPV**: `d855734e-4f25-4f46-9d35-364233777702`
+- **Mechanic**: `d855734e-4f25-4f46-9d35-364233777703`
+
+## Project Structure
+```
+root/
+├── backend-work-order/       # NestJS Backend
+│   ├── src/
+│   │   ├── modules/          # Feature modules (work-order, users, sparepart)
+│   │   ├── common/           # Shared enums, filters
+│   │   ├── prisma/           # Database schema & client
+│   │   └── main.ts           # Entry point
+│   ├── Dockerfile            # Backend container config
+│   └── ...
+├── frontend-work-order/      # Next.js Frontend
+│   ├── app/                  # App Router pages
+│   ├── src/
+│   │   ├── components/       # Reusable components
+│   │   ├── services/         # API services (workOrderService)
+│   │   └── types/            # TypeScript interfaces
+│   ├── Dockerfile            # Frontend container config
+│   └── ...
+├── docker-compose.yml        # Orchestration for FE, BE, DB
+└── README.md                 # Documentation
+```
+
+## Local Development (Manual Setup)
 
 ### 1. Setup Backend & Database
 

@@ -23,13 +23,13 @@ export default function Navbar() {
           {/* Role Selector & User Info */}
           <div className="flex items-center space-x-4">
             <div className="flex flex-col items-end mr-4">
-              <span className="text-xs text-cyan-50 uppercase font-semibold tracking-wider opacity-90 mb-1">Current Role</span>
+              <span className="text-xs text-white uppercase font-semibold tracking-wider opacity-90 mb-1">Current Role</span>
 
               {/* Role Dropdown */}
               <select
                 value={currentRole}
                 onChange={(e) => setRole(e.target.value as UserRole)}
-                className="block w-36 pl-2 pr-8 py-1 text-xs border-transparent bg-cyan-600/50 text-white focus:outline-none focus:ring-1 focus:ring-white/50 rounded cursor-pointer hover:bg-cyan-600/70 transition-colors"
+                className="block w-36 pl-2 pr-8 py-1 text-xs border-transparent bg-white text-cyan focus:outline-none focus:ring-1 focus:ring-white/50 rounded cursor-pointer hover:bg-cyan-100/50 transition-colors"
                 style={{ textAlignLast: 'right' }}
               >
                 {Object.values(UserRole).map((role) => (

@@ -39,6 +39,193 @@
 	],
 	"item": [
 		{
+			"name": "0a. Setup: Get Admin",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"if (jsonData.length > 0) {",
+							"    pm.collectionVariables.set(\"admin_id\", jsonData[0].id);",
+							"    pm.environment.set(\"admin_id\", jsonData[0].id);",
+							"    console.log(\"Admin ID set to: \" + jsonData[0].id);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/users?role=ADMIN",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"users"
+					],
+					"query": [
+						{
+							"key": "role",
+							"value": "ADMIN"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "0b. Setup: Get SPV",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"if (jsonData.length > 0) {",
+							"    pm.collectionVariables.set(\"spv_id\", jsonData[0].id);",
+							"    pm.environment.set(\"spv_id\", jsonData[0].id);",
+							"    console.log(\"SPV ID set to: \" + jsonData[0].id);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/users?role=SPV",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"users"
+					],
+					"query": [
+						{
+							"key": "role",
+							"value": "SPV"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "0c. Setup: Get Mechanic",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"if (jsonData.length > 0) {",
+							"    pm.collectionVariables.set(\"mechanic_id\", jsonData[0].id);",
+							"    pm.environment.set(\"mechanic_id\", jsonData[0].id);",
+							"    console.log(\"Mechanic ID set to: \" + jsonData[0].id);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/users?role=MECHANIC",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"users"
+					],
+					"query": [
+						{
+							"key": "role",
+							"value": "MECHANIC"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "0b. Get All Users",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/users",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "0c. Get User Details",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/users/{{admin_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"users",
+						"{{admin_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "1. Get All Work Orders",
 			"request": {
 				"method": "GET",
@@ -50,6 +237,37 @@
 					],
 					"path": [
 						"work-orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "1b. Get Work Order Detail",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/work-orders/{{work_order_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"work-orders",
+						"{{work_order_id}}"
 					]
 				}
 			},

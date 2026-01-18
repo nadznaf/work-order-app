@@ -21,8 +21,10 @@ import { WorkOrder, Prisma } from '@prisma/client';
 
 import { WorkOrderStatus } from '../../common/enums/workflow.enum';
 
+import { IWorkOrderRepository } from './interfaces/work-order.repository.interface';
+
 @Injectable()
-export class WorkOrderRepository {
+export class WorkOrderRepository implements IWorkOrderRepository {
   constructor(private prisma: PrismaService) {}
 
   async create(data: Prisma.WorkOrderCreateInput): Promise<WorkOrder> {

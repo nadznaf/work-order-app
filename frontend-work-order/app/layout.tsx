@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${outfit.variable} ${inter.variable} font-sans antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen`}>
+      <body className={`${outfit.variable} ${inter.variable} font-sans antialiased bg-gray-50 text-gray-900 min-h-screen`}>
         <RoleProvider>
           <Navbar />
           <main className="pt-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">

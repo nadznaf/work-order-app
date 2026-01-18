@@ -367,21 +367,21 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
           {
               showConfirmModal && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 space-y-4 scale-100 transform transition-all">
+                      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 space-y-4 scale-100 transform transition-all">
                           <div className="flex flex-col items-center text-center space-y-2">
                               <div className="h-12 w-12 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600 mb-2">
                                   <CheckCircle className="h-6 w-6" />
                               </div>
-                              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Confirm Sparepart Request</h3>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                              <h3 className="text-lg font-bold text-gray-900">Confirm Sparepart Request</h3>
+                              <p className="text-sm text-gray-500">
                                   Are you sure you want to submit the following items?
                               </p>
                           </div>
 
-                          <div className="bg-gray-50 dark:bg-gray-900/50 rounded-md p-4 text-sm space-y-2 border border-gray-100 dark:border-gray-700 max-h-40 overflow-y-auto">
+                          <div className="bg-gray-50 rounded-md p-4 text-sm space-y-2 border border-gray-100 max-h-40 overflow-y-auto">
                               {sparepartItems.map((item, idx) => (
                                   <div key={idx} className="flex justify-between">
-                                      <span className="font-medium text-gray-700 dark:text-gray-300">{item.name}</span>
+                                      <span className="font-medium text-gray-700">{item.name}</span>
                                       <span className="text-gray-500">x{item.qty}</span>
                                   </div>
                               ))}
@@ -403,13 +403,13 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
           {
               confirmApproveId && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 space-y-4 scale-100 transform transition-all">
+                      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 space-y-4 scale-100 transform transition-all">
                           <div className="flex flex-col items-center text-center space-y-2">
                               <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-2">
                                   <CheckCircle className="h-6 w-6" />
                               </div>
-                              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Approve Request</h3>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                              <h3 className="text-lg font-bold text-gray-900">Approve Request</h3>
+                              <p className="text-sm text-gray-500">
                                   Are you sure you want to approve this sparepart request?
                               </p>
                           </div>
@@ -430,13 +430,13 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
           {
               showEditConfirmModal && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 space-y-4 scale-100 transform transition-all">
+                      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 space-y-4 scale-100 transform transition-all">
                           <div className="flex flex-col items-center text-center space-y-2">
                               <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-2">
                                   <CheckCircle className="h-6 w-6" />
                               </div>
-                              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Confirm Update</h3>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                              <h3 className="text-lg font-bold text-gray-900">Confirm Update</h3>
+                              <p className="text-sm text-gray-500">
                                   Are you sure you want to save changes to this Work Order?
                               </p>
                           </div>
