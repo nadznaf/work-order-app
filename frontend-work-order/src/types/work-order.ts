@@ -4,7 +4,7 @@ export interface WorkOrder {
   id: string;
   title: string;
   description?: string;
-  status: 'OPEN' | 'SUBMITTED' | 'ASSIGNED' | 'WORKING' | 'COMPLETED' | 'WAITING_SPAREPART'; // Added WAITING_SPAREPART
+  status: 'OPEN' | 'SUBMITTED' | 'ASSIGNED' | 'WORKING' | 'COMPLETED';
   created_by: string;
   assigned_mechanic_id?: string | null;
   start_date?: string | null;
@@ -25,9 +25,9 @@ export interface SparepartRequest {
 export const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'OPEN': return 'destructive'; 
-      case 'SUBMITTED': return 'info'; 
-      case 'ASSIGNED': return 'warning'; 
-      case 'WORKING': return 'warning'; 
+      case 'SUBMITTED': return 'secondary';
+      case 'ASSIGNED': return 'indigo';
+      case 'WORKING': return 'info'; 
       case 'COMPLETED': return 'success';
       case 'PENDING': return 'warning';
       case 'APPROVED': return 'success';

@@ -86,13 +86,39 @@ export default function WorkOrderList() {
   }, [currentRole, currentUserId]); 
 
   // Helper: Status Label Mapper
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-        case 'OPEN': return 'Breakdown';
-        case 'WORKING': return 'On Progress';
-      case 'ASSIGNED': return 'Assigned';
-        default: return status;
+  const getStatusLabel = (wo: WorkOrder) => {
+    // Priority: Check for Sparepart Requests first
+    if (wo.sparepartRequests && wo.sparepartRequests.length > 0) {
+      // If any request is PENDING, show that
+      if (wo.sparepartRequests.some(r => r.status === 'PENDING')) {
+        return 'PENDING';
+      }
+      // If all are processed (e.g. APPROVED or REJECTED), we might want to show that or just the WO status.
+      // User asked to "samakan dengan status pending/approved". 
+      // If we have an approved one and no pending, maybe show "Sparepart Approved"?
+      // But if mechanics are working, "On Progress" is better.
+      // Let's explicitly show "Sparepart Approved" only if status is NOT yet completed, 
+      // effectively giving visibility to the approval.
+      // However, usually after approval, mechanic starts working.
+      // Let's stick to showing 'Sparepart Pending' as a specific state, and otherwise WO status.
     }
+
+    // Fallback to standard WO Status
+    switch (wo.status) {
+      case 'OPEN': return 'BREAKDOWN';
+      case 'WORKING': return 'WORKING';
+      case 'ASSIGNED': return 'ASSIGNED';
+      default: return wo.status;
+    }
+  }
+
+  // Helper: Badge Variant Mapper
+  const getBadgeVariant = (wo: WorkOrder) => {
+    // Custom variant for Sparepart Pending
+    if (wo.sparepartRequests?.some(r => r.status === 'PENDING')) {
+      return 'warning'; // or destructve? Warning seems appropriate for waiting.
+    }
+    return getStatusBadgeVariant(wo.status);
   }
 
   const handleAction = async (wo: WorkOrder, action: string, type: 'submit' | 'start' | 'complete', body: any = {}) => {
@@ -305,8 +331,8 @@ export default function WorkOrderList() {
                           </TableCell>
 
                           <TableCell className="text-center">
-                            <Badge variant={getStatusBadgeVariant(wo.status) as any} className="capitalize text-[10px] px-3 py-1 font-normal tracking-wide rounded-full shadow-sm">
-                                {getStatusLabel(wo.status)}
+                            <Badge variant={getBadgeVariant(wo) as any} className="capitalize text-[10px] px-3 py-1 font-normal tracking-wide rounded-full shadow-sm">
+                              {getStatusLabel(wo)}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>

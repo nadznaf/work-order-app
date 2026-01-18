@@ -145,11 +145,36 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
           toast.success("Sparepart request approved");
       } catch (err: any) {
           toast.error('Failed to approve: ' + (err.response?.data?.message || err.message));
-          setConfirmApproveId(null);
       } finally {
           setActionLoading(false);
       }
   };
+
+    // Helper: Status Label Mapper
+    const getStatusLabel = (wo: WorkOrder) => {
+        // Priority: Check for Sparepart Requests first
+        if (wo.sparepartRequests && wo.sparepartRequests.length > 0) {
+            if (wo.sparepartRequests.some(r => r.status === 'PENDING')) {
+                return 'PENDING';
+            }
+        }
+
+        // Fallback to standard WO Status
+        switch (wo.status) {
+            case 'OPEN': return 'BREAKDOWN';
+            case 'WORKING': return 'WORKING';
+            case 'ASSIGNED': return 'ASSIGNED';
+            default: return wo.status;
+        }
+    }
+
+    // Helper: Badge Variant Mapper
+    const getBadgeVariant = (wo: WorkOrder) => {
+        if (wo.sparepartRequests?.some(r => r.status === 'PENDING')) {
+            return 'warning';
+        }
+        return getStatusBadgeVariant(wo.status);
+    }
 
   if (loading) return <div className="p-8 text-center text-cyan-600"><Loader2 className="animate-spin h-8 w-8 mx-auto"/> Loading details...</div>;
   if (!workOrder) return <div className="p-8 text-center text-red-500">Work Order not found</div>;
@@ -184,6 +209,8 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
                                   Edit
                               </Button>
                           )}
+
+
                           {/* Save/Cancel Actions */}
                           {isEditing && (
                               <div className="flex gap-1">
@@ -196,8 +223,8 @@ export default function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
                               </div>
                           )}
 
-                          <Badge variant={getStatusBadgeVariant(workOrder.status) as any} className="text-sm px-3 py-1">
-                              {workOrder.status}
+                          <Badge variant={getBadgeVariant(workOrder) as any} className="text-sm px-3 py-1">
+                              {getStatusLabel(workOrder)}
                           </Badge>
                       </div>
                   </div>
