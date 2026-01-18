@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useRole } from '@/src/context/RoleContext';
 import api from '@/src/api/axios';
 import { UserRole } from '@/src/types/enums';
@@ -23,6 +24,7 @@ interface WorkOrder {
 }
 
 export default function WorkOrderList() {
+  const router = useRouter();
   const { currentRole, currentUserId } = useRole();
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -180,9 +182,14 @@ export default function WorkOrderList() {
     <Card className="shadow-none border-0 bg-transparent">
         {/* Header Section */}
         <div className="flex justify-end mb-4">
-             <Button className="bg-cyan-600 hover:bg-cyan-700 text-white font-medium px-6 rounded shadow-lg shadow-cyan-200 transition-all">
-                + Add New Request
-             </Button>
+        {currentRole === UserRole.ADMIN && (
+          <Button
+            onClick={() => router.push('/work-orders/create')}
+            className="bg-cyan-600 hover:bg-cyan-700 text-white font-medium px-6 rounded shadow-lg shadow-cyan-200 transition-all"
+          >
+            + Add New Order
+          </Button>
+        )}
         </div>
 
       <CardContent className="p-0 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
